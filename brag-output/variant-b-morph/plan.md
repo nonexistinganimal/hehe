@@ -18,10 +18,13 @@ B14 6.504  Drag passes max: knob resists, track rubber-bands (stretches longer a
 B15 7.004  Release: knob springs back from wherever it was to 1.6; value counts down to 1.6; track un-stretches.
 B16 7.505  Cursor clicks Choice: indicator slides left, leading edge first. Camera back to 1.5×.
 B17 8.005  Chart opens: intent bars draw themselves (refund 0.94 in ink; 0.03 / 0.02 / 0.01 in ink-3), numbers scramble.
-B18 8.505  Cursor hovers refund: tooltip "p 0.94 · conf 0.91".
-B19 9.006  Card collapses into an ink stat pill "70–500 ms" · end-to-end (scramble). Bong A3.
-B20 9.506  Pill becomes a paper toast: ✓ "$0.042 / 1M input · output free".
-B21 10.006 Toast grows into the wordmark card; price line slides to the footer; "Jev" scrambles in. Warm impact.
+B18 8.505  Cursor hovers refund: tooltip "p 0.94 · conf 0.91" lands ON the beat (enters 80 ms early), settled a full beat.
+B19 9.006  Chart exits, fill flips paper→ink in 3 frames inside the size morph, ink stat pill "70–500 ms" · end-to-end scrambles in. Bong A3.
+B20 9.506  Pill grows downward (top fixed, stat never moves): ✓ "$0.042 / 1M input · output free" row drops in. Stat settled ~0.75 s.
+B21 10.006 Exit → 3-frame ink→paper flip → wordmark card: "Jev" scrambles in, price line re-enters as the footer. Warm impact.
 B22 10.507 "by TypeSafe" fades up; "System One model" micro label + Choice/Score/Noul chips.
-B23 11.007 Footer swaps to "typesafe.ai · early access"; cursor starts home.
-B24 11.507 Wordmark card morphs back into the "Ask Jev ▸" pill; all springs at rest by ~11.95 s → last frame identical to frame 0.
+B23 11.007 Footer swaps to "typesafe.ai · early access" (swap 10.88–11.03, settled until 11.54); cursor starts home.
+B24 11.507 Content exits, card shrinks, 3-frame paper→ink flip, "Ask Jev ▸" enters; all springs at rest by ~11.95 s → last frame identical to frame 0.
+
+Colour rule: every ink↔paper change = old content exits (≤80 ms) → fill cuts through in 50 ms (3 frames) during the size morph → new content enters. No legible content on a mid-grey fill.
+Motion blur: 4/8/16/32 subframes per frame from measured screen motion (step ≤ 2.5 px), equal-weight average (blend.py).
