@@ -105,8 +105,8 @@ pre.code{margin:26px 0 0;font:400 40px/1.5 var(--mono);white-space:pre;}
 #toast{display:flex;align-items:center;gap:18px;height:92px;padding:0 36px 0 30px;border-radius:14px;background:var(--ts-paper);
   box-shadow:inset 0 0 0 1.5px var(--ts-rule), 0 14px 30px -14px rgba(27,25,21,.25);font:700 36px/1 var(--mono);white-space:pre;}
 #toast .dm{font-weight:400;color:var(--ts-ink-2);}
-#tooltip{font:700 24px/1.35 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);padding:13px 18px 12px;border-radius:8px;white-space:pre;}
-#tooltip:after{content:"";position:absolute;left:44px;margin-left:-10px;bottom:-10px;border:10px solid transparent;border-bottom:0;border-top-color:var(--ts-ink);}
+#tooltip{font:700 22px/1.35 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);padding:13px 18px 12px;border-radius:8px;white-space:pre;}
+#tooltip:after{content:"";position:absolute;left:22px;margin-left:-10px;bottom:-10px;border:10px solid transparent;border-bottom:0;border-top-color:var(--ts-ink);}
 
 /* stats */
 #Lstats{width:1040px;}
@@ -209,7 +209,7 @@ const S16 = BP / 4;
 const DUR = 11.996;
 
 // ---------- springs (closed-form step responses) ----------
-const SP = { snap:[28,.9], move:[18,.95], lazy:[11,1], shape:[20,.9], cam:[11.5,1], glide:[15,1], fast:[34,.92], drop:[26,.86] };
+const SP = { snap:[28,.9], move:[18,.95], lazy:[11,1], shape:[20,.9], fold:[21,.96], unfold:[22,.96], cam:[11.5,1], glide:[15,1], fast:[34,.92], drop:[26,.86] };
 function step(t, sp){
   if (t <= 0) return 0;
   const w = sp[0], z = sp[1];
@@ -334,8 +334,8 @@ function init(){
     [B(6),   G(P.st, W, stH1, 18), 'shape'],
     [B(7),   G(P.st, W, stH2, 18), 'shape'],
     [B(8),   G(P.st, W, stH3, 18), 'shape'],
-    [B(9),   G(cubeTop, P.cubeS, P.cubeS, 6), 'fast'],
-    [4.36,   G(P.ans, W, ansH0, 18), 'fast'],
+    [B(9),   G(cubeTop, P.cubeS, P.cubeS, 6), 'fold'],
+    [4.40,   G(P.ans, W, ansH0, 18), 'unfold'],
     [B(11),  G(P.ans, W, ansFull, 18), 'shape'],
     [B(13),  G(P.code, W, codeH0, 18), 'shape'],
     [6.22,   G(P.code, W, codeFull, 18), 'shape'],
@@ -349,12 +349,12 @@ function init(){
     [0,      K(C.gray, ringNone)],
     [B(5),   K(C.paper, ringPaper), 'fast'],
     [B(9),   K(C.paper, ringInk), 'fast'],
-    [4.36,   K(C.paper, ringPaper), 'fast'],
+    [4.40,   K(C.paper, ringPaper), 'fast'],
     [B(13) + 0.05, K(C.ink, ringInk), [60, 1]],
     [B(17) + 0.05, K(C.paper, ringPaper), [60, 1]],
     [B(21) + 0.05, K(C.ink, ringInk), [60, 1]],
   ];
-  FOLD = [[0, 0], [B(9), 1, 'fast'], [4.36, 0, 'fast']];
+  FOLD = [[0, 0], [B(9), 1, 'fold'], [4.40, 0, 'unfold']];
 
   // camera framing: fit a world box into the free part of the square (below the kicker band when a kicker is up)
   const box = (x0, y0, x1, y1) => ({ x0, y0, x1, y1 });
@@ -379,8 +379,8 @@ function init(){
     [B(6),  fit(stBB(stH1), true), 'cam'],
     [B(7) - 0.04, fit(stBB(stH2), false), 'cam'],
     [B(8),  fit(stBB(stH3), false, 1.045, 1.2, 40, 30), 'cam'],
-    [B(9),  fit(cubeBB, false, 1, 1.25), 'fast'],
-    [4.36,  fit(ansBB(ansH0), false), 'cam'],
+    [B(9),  fit(cubeBB, false, 1, 1.25), 'fold'],
+    [4.40,  fit(ansBB(ansH0), false), 'cam'],
     [B(11) - 0.06, fit(ansBB(ansFull), true), 'cam'],
     [B(13), fit(codeBB(codeH0), true), 'cam'],
     [6.22,  fit(codeBB(codeFull), true, 1.0, 1.2, 0, 20), 'cam'],
@@ -521,11 +521,12 @@ window.seek = function(t){
   E.faceB.setAttribute('style', faceStroke + 'fill:#D6CCBA');
 
   // rails + chips (engine)
-  const rOn = clamp((f - 0.55)/0.35);
+  const rGrow = easeOut((t - 4.03)/0.16);
+  const rOn = clamp((f - 0.45)/0.3) * clamp(1 - (t - 4.30)/0.08);
   const ux = 0.8660254, uy = 0.5;               // iso axis u (down-right), v = (-ux, uy) (down-left)
   const gA = [(BL[0] + BR[0])/2, (BL[1] + BR[1])/2 + Hh];   // ground mid of face A
   const gB = [(BR[0] + TR[0])/2, (BR[1] + TR[1])/2 + Hh];   // ground mid of face B
-  const RL = 430*rOn, RW = 80;
+  const RL = 430*rGrow, RW = 80;
   const rail = (g, dir, perp) => pts([
     [g[0] + perp[0]*RW/2, g[1] + perp[1]*RW/2], [g[0] + perp[0]*RW/2 + dir[0]*RL, g[1] + perp[1]*RW/2 + dir[1]*RL],
     [g[0] - perp[0]*RW/2 + dir[0]*RL, g[1] - perp[1]*RW/2 + dir[1]*RL], [g[0] - perp[0]*RW/2, g[1] - perp[1]*RW/2]]);
@@ -536,14 +537,14 @@ window.seek = function(t){
   for (let i = 0; i < 3; i++){
     const ci = E['ci' + i], co = E['co' + i];
     // inputs ride the rail into face A
-    const ti = 4.04 + i*0.07, pi = clamp((t - ti)/0.24);
+    const ti = 4.07 + i*0.06, pi = clamp((t - ti)/0.2);
     const di = 400*(1 - easeInOut(pi));
     const pinx = gA[0] - ux*di, piny = gA[1] + uy*di;
     const oi = rOn * clamp(pi*6) * clamp((di - 30)/60);
     ci.style.opacity = oi.toFixed(3); ci.style.visibility = oi > 0.001 ? 'visible' : 'hidden';
     ci.style.transform = `translate(${px(pinx - ci.offsetWidth/2)},${px(piny - ci.offsetHeight - 6)})`;
     // outputs leave face B
-    const to = 4.16 + i*0.07, po = clamp((t - to)/0.26);
+    const to = 4.13 + i*0.05, po = clamp((t - to)/0.19);
     const dO = 40 + 360*easeInOut(po);
     const poX = gB[0] + ux*dO, poY = gB[1] + uy*dO;
     const oo = rOn * clamp(po*5) * clamp(1 - (po - 0.85)/0.15);
@@ -590,15 +591,15 @@ window.seek = function(t){
   E.run.style.background = rgb([27 + 22*hov, 25 + 20*hov, 21 + 16*hov]);
 
   // cube top label
-  const cv = clamp((f - 0.5)/0.35) * (t < 4.36 ? 1 : clamp(1 - (t - 4.36)/0.06));
+  const cv = clamp((f - 0.5)/0.35) * (t < 4.38 ? 1 : clamp(1 - (t - 4.38)/0.06));
   E.Lcube.style.opacity = cv.toFixed(3); E.Lcube.style.visibility = cv > 0.001 ? 'visible' : 'hidden';
   E.Lcube.style.left = px((w - 360)/2); E.Lcube.style.top = px((h - 360)/2);
 
   // answers (4.5 - 6.0)
   const tAx = B(13);
-  applyVis(E.Lans.querySelector('.ahead'), vis(t, 4.46, tAx));
+  applyVis(E.Lans.querySelector('.ahead'), vis(t, 4.54, tAx));
   const barP = step(t - (B(11) - 0.02), SP.shape);
-  const rowT = [B(10), B(10) + S16, B(10) + 2*S16];
+  const rowT = [B(10) + S16, B(10) + 1.5*S16, B(10) + 2*S16];   // rows land on 32nds once the card has unfolded
   [E.a1, E.a2, E.a3].forEach((el, i) => {
     const v = vis(t, rowT[i] - 0.02, tAx, 0, 'drop');
     const dx = -26*(1 - step(t - rowT[i], SP.drop));
@@ -626,9 +627,9 @@ window.seek = function(t){
     b.querySelector('.bval').style.fontWeight = i === 0 ? '700' : '400';
   });
   // tooltip over the refund bar
-  const tt = vis(t, B(11) + 0.1, B(13) - 0.1, 10);
+  const tt = vis(t, B(11) + 0.1, B(13), 10);
   applyVis(E.tooltip, tt);
-  place(E.tooltip, P.barEnd[0] - 44, P.barEnd[1] - E.tooltip.offsetHeight - 26);
+  place(E.tooltip, P.barEnd[0] - 22, P.barEnd[1] - E.tooltip.offsetHeight - 26);
 
   // code card (6.0 - 8.0)
   const tC = B(13) + 0.08, tCx = B(17);
@@ -732,6 +733,21 @@ window.seek = function(t){
   return true;
 };
 
+// motion probe for adaptive motion blur: screen-space boxes of every visible moving thing at time t
+const PROBE_IDS = ['shape','faceA','faceB','railIn','railOut','ci0','ci1','ci2','co0','co1','co2','cursor','ring','toast','tooltip',
+  'errchip','codeline','engCount','engLabel','endBy','endMicro','Lend','kicker','free','sknob','sfill','tgk','a1','a2','a3','q1','q2','q3',
+  'sfoot','run','r1','r2','r3','cl1','cl2','cl3','cfoot','Lcube','bars'];
+window.probe = function(t){
+  window.seek(t);
+  const els = PROBE_IDS.map(id => document.getElementById(id)).concat([...document.querySelectorAll('.bfill')]);
+  return els.map(el => {
+    const cs = getComputedStyle(el);
+    if (cs.visibility !== 'visible' || parseFloat(cs.opacity) < 0.03) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return null;
+    return [r.left, r.top, r.right, r.bottom];
+  });
+};
 window.__ready = (async () => {
   await document.fonts.load('400 40px "Space Mono"'); await document.fonts.load('700 40px "Space Mono"');
   await document.fonts.load('400 40px Geist'); await document.fonts.load('600 40px Geist');

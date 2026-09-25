@@ -1,5 +1,8 @@
 // Render Jev launch video frames with Playwright.
-// usage: node render.mjs stills <outdir> t1:name t2:name ...   |  node render.mjs frames <outdir>
+// usage: node render.mjs stills <outdir> t1:name t2:name ...
+//        node render.mjs plan <plan.json>            measure per-frame motion -> subframe count per output frame
+//        node render.mjs adaptive <outdir> <plan.json> render S[n] subframes for frame n as g%06d.jpg (global order)
+//        node render.mjs poster <file.jpg>
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -7,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const url = 'file://' + path.join(here, 'index.html');
 const [mode, outDir, ...rest] = process.argv.slice(2);
-if (mode !== 'poster') fs.mkdirSync(outDir, { recursive: true });
+if (mode !== 'poster' && mode !== 'plan') fs.mkdirSync(outDir, { recursive: true });
 const FPS = 60, SUB = 4, DUR = 11.996, POSTER_T = 11.9;
 const NF = Math.round(DUR * FPS);   // 720 output frames (the mux trims to 11.996 s)
 
@@ -44,6 +47,38 @@ if (mode === 'stills'){
       const t = n === 0 ? POSTER_T : n / FPS + k / (FPS * SUB);
       await shot(pg, t, path.join(outDir, `f${String(idx).padStart(5, '0')}.jpg`), 'jpeg');
       if (++done % 240 === 0) console.log(`${done}/${total}  ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+    }
+  }));
+}
+if (mode === 'plan'){
+  // motion over each frame's shutter interval [t, t+1/60): max screen displacement of any visible element box corner
+  const pg = await openPage(browser);
+  const S = [], D = [];
+  const MIN = 4, MAX = 32, STEP_PX = 1.25;   // aim for <= 1.25 px between neighbouring subframes
+  let prev = await pg.evaluate(t => window.probe(t), 0);
+  for (let n = 0; n < NF; n++){
+    const next = await pg.evaluate(t => window.probe(t), (n + 1) / FPS);
+    let d = 0;
+    for (let i = 0; i < prev.length; i++){ const a = prev[i], b = next[i]; if (!a || !b) continue;
+      for (let j = 0; j < 4; j++) d = Math.max(d, Math.abs(a[j] - b[j])); }
+    D.push(+d.toFixed(2));
+    S.push(n === 0 ? 1 : Math.min(MAX, Math.max(MIN, Math.ceil(d / STEP_PX))));
+    prev = next;
+  }
+  fs.writeFileSync(outDir, JSON.stringify({ S, D }));
+  const tot = S.reduce((a, b) => a + b, 0);
+  console.log('subframes total', tot, 'frames at max', S.filter(x => x === MAX).length, 'max disp px', Math.max(...D));
+} else if (mode === 'adaptive'){
+  const plan = JSON.parse(fs.readFileSync(rest[0], 'utf8'));
+  const jobs = [];
+  plan.S.forEach((sn, n) => { for (let k = 0; k < sn; k++) jobs.push(n === 0 ? POSTER_T : n / FPS + k / (FPS * sn)); });
+  const pages = [await openPage(browser), await openPage(browser)];
+  let next = 0, done = 0;
+  await Promise.all(pages.map(async pg => {
+    while (true){
+      const idx = next++; if (idx >= jobs.length) break;
+      await shot(pg, jobs[idx], path.join(outDir, `g${String(idx).padStart(6, '0')}.jpg`), 'jpeg');
+      if (++done % 500 === 0) console.log(`${done}/${jobs.length}  ${((Date.now() - t0) / 1000).toFixed(0)}s`);
     }
   }));
 }
