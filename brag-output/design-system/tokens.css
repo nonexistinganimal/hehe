@@ -1,0 +1,51 @@
+/* TypeSafe AI: design tokens for the Jev launch video.
+   Verified: Space Mono headings, warm parchment palette, code-native language.
+   Values marked "inferred" are reconstructed; swap them once typesafe.ai's CSS is reachable. */
+
+@import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Geist:wght@400;500;600&display=block");
+
+:root {
+  /* color: warm monochrome, ink on parchment (inferred values) */
+  --ts-parchment: #F1ECE2;
+  --ts-paper:     #F8F5EE;
+  --ts-sunken:    #E7E0D2;
+  --ts-rule:      #D6CCBA;
+  --ts-ink:       #1B1915;
+  --ts-ink-2:     #5B554A;
+  --ts-ink-3:     #948B7C;
+  --ts-signal:    var(--ts-ink); /* placeholder: set to the site's accent once confirmed */
+
+  /* type */
+  --ts-font-mono: "Space Mono", ui-monospace, monospace; /* verified */
+  --ts-font-ui:   "Geist", system-ui, sans-serif;        /* stand-in for the body face */
+  --ts-size-display: 112px;
+  --ts-size-h1: 72px;
+  --ts-size-h2: 48px;
+  --ts-size-code: 34px;
+  --ts-size-label: 24px;
+  --ts-size-micro: 18px;
+  --ts-track-display: -0.02em;
+
+  /* shape */
+  --ts-radius-sm: 6px;
+  --ts-radius-md: 12px;
+  --ts-radius-lg: 20px;
+  --ts-radius-pill: 999px;
+  --ts-border: 1px solid var(--ts-rule);
+  --ts-shadow: 0 1px 0 rgba(27, 25, 21, .06), 0 12px 32px -12px rgba(27, 25, 21, .18);
+
+  /* spacing: 8px base */
+  --ts-space-1: 8px;
+  --ts-space-2: 16px;
+  --ts-space-3: 24px;
+  --ts-space-4: 32px;
+  --ts-space-6: 48px;
+  --ts-space-8: 64px;
+
+  /* motion: closed-form spring params (omega rad/s, zeta) */
+  --ts-spring-snap: 28 0.9;
+  --ts-spring-move: 18 0.95;
+  --ts-spring-lazy: 11 1.0;
+  --ts-scramble-glyphs: "{}[]<>/_=:01#";
+  --ts-scramble-ms-per-char: 18;
+}
