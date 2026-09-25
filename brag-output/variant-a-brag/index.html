@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jev launch</title>
+<link rel="stylesheet" href="../shared/fonts/fonts.css">
+<style>
+:root{
+  --ts-parchment:#F1ECE2; --ts-paper:#F8F5EE; --ts-sunken:#E7E0D2; --ts-rule:#D6CCBA;
+  --ts-ink:#1B1915; --ts-ink-2:#5B554A; --ts-ink-3:#948B7C;
+  --mono:"Space Mono", ui-monospace, monospace; --ui:"Geist", system-ui, sans-serif;
+}
+html,body{margin:0;padding:0;background:var(--ts-parchment);}
+#stage{position:relative;width:1440px;height:1440px;overflow:hidden;background:var(--ts-parchment);
+  font-family:var(--mono);color:var(--ts-ink);-webkit-font-smoothing:antialiased;}
+#cam{position:absolute;left:0;top:0;width:1440px;height:1440px;transform-origin:0 0;}
+#grid{position:absolute;left:-1600px;top:-1600px;width:4800px;height:4800px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='1.7' fill='%23D2C8B5'/%3E%3C/svg%3E");}
+.abs{position:absolute;left:0;top:0;}
+svg{overflow:visible;}
+#iso{position:absolute;left:0;top:0;width:10px;height:10px;}
+
+/* the one shape */
+#shape{position:absolute;left:0;top:0;overflow:hidden;transform-origin:50% 50%;}
+.layer{position:absolute;left:0;top:0;box-sizing:border-box;}
+.pad{padding:52px 56px 56px;}
+.lbl{font:400 24px/1 var(--mono);color:var(--ts-ink-3);letter-spacing:.02em;}
+.tag{display:inline-block;font:700 24px/1 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);
+  padding:8px 12px 7px;border-radius:6px;letter-spacing:0;}
+.tag.o{background:transparent;color:var(--ts-ink-2);box-shadow:inset 0 0 0 1.5px var(--ts-rule);}
+.arr{display:inline-block;vertical-align:middle;}
+
+/* hook bubble */
+#Lbub{width:940px;padding:40px 48px 44px;font-family:var(--ui);color:#3F3F46;}
+.bhead{display:flex;align-items:center;gap:14px;font:500 24px/1 var(--ui);color:#71717A;}
+.av{width:34px;height:34px;border-radius:50%;background:#C4C4CA;display:inline-block;}
+.timer{margin-left:auto;font:500 22px/1 var(--ui);color:#52525B;background:#D4D4D8;padding:9px 14px;border-radius:999px;
+  font-variant-numeric:tabular-nums;}
+#bubText{margin-top:24px;white-space:pre;}
+#bubText .l1{font:400 48px/1.3 var(--ui);color:#3F3F46;display:block;height:63px;white-space:pre-wrap;}
+#bubText .l2{font:400 30px/1.5 var(--mono);color:#8A8A93;display:block;height:45px;margin-top:10px;}
+#bubText .l3{font:400 34px/1.45 var(--mono);color:#3F3F46;display:block;height:50px;}
+#bubText .car{display:inline-block;width:16px;height:36px;background:#71717A;vertical-align:-6px;margin-left:3px;}
+#bigS{display:inline-block;border-radius:6px;}
+#codeline{width:940px;height:104px;box-sizing:border-box;border-radius:14px;background:var(--ts-sunken);
+  font:400 40px/104px var(--mono);padding:0 40px;white-space:pre;}
+#codeline .k{color:var(--ts-ink-2);}
+#errchip{font:700 28px/1 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);padding:16px 22px 15px;border-radius:8px;white-space:pre;}
+#errchip:before{content:"";position:absolute;left:176px;top:-11px;border:11px solid transparent;border-top:0;border-bottom-color:var(--ts-ink);}
+
+/* state card */
+#Lstate{width:1040px;}
+.ticket{font:400 38px/1.4 var(--mono);margin-top:18px;color:var(--ts-ink);}
+.rule{height:1.5px;background:var(--ts-rule);margin:34px 0 30px;}
+.qrow{padding:16px 0 14px;}
+#q1{margin-top:12px;}
+.qh{display:flex;align-items:center;gap:20px;}
+.qname{font:700 38px/1 var(--mono);}
+.qopt{margin-top:14px;font:400 27px/1 var(--mono);color:var(--ts-ink-2);white-space:pre;}
+.sfoot{display:flex;align-items:center;justify-content:space-between;margin-top:26px;height:72px;}
+.sfoot .lbl{color:var(--ts-ink-3);}
+#run{display:inline-flex;align-items:center;gap:14px;height:72px;padding:0 32px 0 36px;border-radius:999px;background:var(--ts-ink);
+  color:var(--ts-parchment);font:600 32px/1 var(--ui);transform-origin:50% 50%;}
+
+/* cube top face */
+#Lcube{width:360px;height:360px;display:flex;align-items:center;justify-content:center;font:700 92px/1 var(--mono);color:var(--ts-ink);}
+
+/* answers */
+#Lans{width:1040px;}
+.ahead{display:flex;justify-content:space-between;}
+.arow{display:flex;align-items:center;height:84px;}
+#a1{margin-top:16px;}
+.aname{font:700 36px/1 var(--mono);width:272px;flex:none;}
+.atag{width:128px;flex:none;}
+.aarr{width:70px;flex:none;color:var(--ts-ink-3);}
+.aval{font:700 36px/1 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);padding:12px 18px 11px;border-radius:8px;white-space:pre;}
+.aconf{margin-left:auto;font:400 24px/1 var(--mono);color:var(--ts-ink-2);white-space:pre;}
+#bars{padding:10px 0 18px 0;}
+.bar{display:flex;align-items:center;height:50px;}
+.blab{font:400 27px/1 var(--mono);width:272px;flex:none;padding-left:0;}
+.btrack{position:relative;width:520px;height:20px;border-radius:10px;background:var(--ts-sunken);flex:none;}
+.bfill{position:absolute;left:0;top:0;height:20px;border-radius:10px;background:var(--ts-ink);}
+.bval{font:400 27px/1 var(--mono);margin-left:26px;}
+
+/* code card (ink) */
+#Lcode{width:1040px;color:var(--ts-parchment);}
+#Lcode .lbl{color:#A39A8A;}
+pre.code{margin:26px 0 0;font:400 40px/1.5 var(--mono);white-space:pre;}
+.code .ln{display:block;}
+.code .kw{font-weight:700;color:#FFFFFF;}
+.code .st{color:#D9CFBC;}
+.code .dm{color:#A39A8A;}
+#thr{display:inline-block;background:rgba(241,236,226,.14);border-radius:6px;padding:0 6px;margin:0 -6px;}
+.cfoot{margin-top:30px;padding-top:22px;border-top:1.5px solid rgba(241,236,226,.16);}
+.crow{display:flex;align-items:center;height:70px;}
+.cfoot .lbl{color:#C9BFAE;font-size:27px;width:210px;flex:none;}
+#strack{position:relative;width:470px;height:12px;border-radius:6px;background:rgba(241,236,226,.2);margin:0 34px 0 0;flex:none;}
+#sfill{position:absolute;left:0;top:0;height:12px;border-radius:6px;background:var(--ts-parchment);}
+#sknob{position:absolute;top:-12px;width:36px;height:36px;border-radius:50%;background:var(--ts-parchment);box-shadow:0 0 0 5px var(--ts-ink);}
+#sval{font:700 36px/1 var(--mono);width:100px;}
+#tgState{font:700 30px/1 var(--mono);margin-left:26px;white-space:pre;}
+#tg{position:relative;width:100px;height:54px;border-radius:27px;background:rgba(241,236,226,.2);}
+#tgk{position:absolute;top:7px;height:40px;border-radius:20px;background:var(--ts-parchment);}
+
+#toast{display:flex;align-items:center;gap:18px;height:92px;padding:0 36px 0 30px;border-radius:14px;background:var(--ts-paper);
+  box-shadow:inset 0 0 0 1.5px var(--ts-rule), 0 14px 30px -14px rgba(27,25,21,.25);font:700 36px/1 var(--mono);white-space:pre;}
+#toast .dm{font-weight:400;color:var(--ts-ink-2);}
+#tooltip{font:700 24px/1.35 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);padding:13px 18px 12px;border-radius:8px;white-space:pre;}
+#tooltip:after{content:"";position:absolute;left:44px;margin-left:-10px;bottom:-10px;border:10px solid transparent;border-bottom:0;border-top-color:var(--ts-ink);}
+
+/* stats */
+#Lstats{width:1040px;}
+.srow{display:flex;align-items:center;justify-content:space-between;height:178px;}
+.srow + .srow{border-top:1.5px solid var(--ts-rule);}
+.slab{font:400 30px/1 var(--mono);color:var(--ts-ink-2);white-space:pre;}
+.sval{font:700 112px/1 var(--mono);letter-spacing:-.03em;white-space:pre;}
+.sval .u{font-weight:400;color:var(--ts-ink-2);font-size:64px;letter-spacing:0;}
+#free{display:inline-block;font:700 96px/1 var(--mono);background:var(--ts-ink);color:var(--ts-parchment);padding:14px 30px 12px;border-radius:12px;letter-spacing:-.02em;}
+
+/* end */
+#Lend{padding:46px 72px 40px;font:700 300px/1 var(--mono);color:var(--ts-parchment);letter-spacing:-.04em;white-space:pre;}
+#endBy{font:400 54px/1 var(--mono);color:var(--ts-ink-2);white-space:pre;text-align:center;}
+#endBy b{color:var(--ts-ink);}
+#endMicro{font:400 32px/1 var(--mono);color:var(--ts-ink-2);white-space:pre;text-align:center;letter-spacing:.01em;}
+
+/* engine labels & chips */
+.ichip{font:700 26px/1 var(--mono);padding:10px 14px 9px;border-radius:7px;white-space:pre;}
+.ichip.in{background:var(--ts-ink);color:var(--ts-parchment);}
+.ichip.out{background:var(--ts-paper);color:var(--ts-ink);box-shadow:inset 0 0 0 2px var(--ts-ink);}
+#engLabel{font:400 32px/1 var(--mono);color:var(--ts-ink-2);white-space:pre;}
+#engLabel b{color:var(--ts-ink);}
+#engCount{font:700 84px/1 var(--mono);white-space:pre;letter-spacing:-.03em;}
+#engCount .u{font-weight:400;color:var(--ts-ink-2);font-size:48px;letter-spacing:0;}
+
+#ring{width:80px;height:80px;margin:-40px 0 0 -40px;border-radius:50%;box-shadow:inset 0 0 0 3px var(--ts-ink);}
+#cursor{width:40px;height:52px;transform-origin:0 0;}
+#kicker{position:absolute;left:0;top:112px;width:1440px;text-align:center;font:700 60px/1 var(--mono);letter-spacing:-.02em;white-space:pre;color:var(--ts-ink);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div id="grid"></div>
+    <svg id="iso"><polygon id="railIn" /><polygon id="railOut" />
+      <polygon id="faceA" /><polygon id="faceB" /></svg>
+    <div class="abs" id="codeline"><span class="k">const</span> a = JSON.<span id="jp">parse</span>(reply)</div>
+    <div class="abs" id="errchip">SyntaxError: Unexpected token 'S'</div>
+    <div class="abs" id="toast"><svg class="arr" width="34" height="34" viewBox="0 0 24 24"><path d="M3 12h16M13 5.5l6.5 6.5-6.5 6.5" stroke="#1B1915" stroke-width="2.6" fill="none"/></svg><span>billing</span><span class="dm">·  256 ms</span></div>
+    <div class="abs ichip in" id="ci0">Choice</div><div class="abs ichip in" id="ci1">Noul</div><div class="abs ichip in" id="ci2">Score</div>
+    <div class="abs ichip out" id="co0">"refund"</div><div class="abs ichip out" id="co1">0.97</div><div class="abs ichip out" id="co2">1.6</div>
+    <div id="shape">
+      <div class="layer" id="Lbub">
+        <div class="bhead"><span class="av"></span><span>assistant</span><span class="timer" id="timer">thinking 2.9s</span></div>
+        <div id="bubText"></div>
+      </div>
+      <div class="layer pad" id="Lstate">
+        <div class="lbl" id="sLbl">state</div>
+        <div class="ticket" id="ticket">"I was charged twice and need the<br>duplicate refunded today."</div>
+        <div class="rule" id="sRule"></div>
+        <div class="lbl" id="qLbl">questions</div>
+        <div class="qrow" id="q1"><div class="qh"><span class="qname">intent</span><span class="tag">Choice</span></div><div class="qopt">refund · technical_help · information · other</div></div>
+        <div class="qrow" id="q2"><div class="qh"><span class="qname">is_urgent</span><span class="tag">Noul</span></div><div class="qopt">probability it is true, 0 – 1</div></div>
+        <div class="qrow" id="q3"><div class="qh"><span class="qname">frustration</span><span class="tag">Score</span></div><div class="qopt">0 calm · 1 concerned · 2 very angry</div></div>
+        <div class="sfoot" id="sfoot"><span class="lbl">jev-latest</span><span id="run">Run<svg width="20" height="22" viewBox="0 0 20 22"><path d="M2 1.5 L18.5 11 L2 20.5Z" fill="#F1ECE2"/></svg></span></div>
+      </div>
+      <div class="layer" id="Lcube">jev</div>
+      <div class="layer pad" id="Lans">
+        <div class="ahead"><span class="lbl">answers</span><span class="lbl" id="aMeta">jev-latest · 256 ms</span></div>
+        <div class="arow" id="a1"><span class="aname">intent</span><span class="atag"><span class="tag o">Choice</span></span><span class="aarr"><svg width="40" height="30" viewBox="0 0 24 18"><path d="M1 9h19M14 3l6 6-6 6" stroke="#948B7C" stroke-width="2.2" fill="none"/></svg></span><span class="aval" id="v1">"refund"</span></div>
+        <div id="bars">
+          <div class="bar" id="b0"><span class="blab">refund</span><span class="btrack"><span class="bfill"></span></span><span class="bval">0.94</span></div>
+          <div class="bar" id="b1"><span class="blab">technical_help</span><span class="btrack"><span class="bfill"></span></span><span class="bval">0.03</span></div>
+          <div class="bar" id="b2"><span class="blab">information</span><span class="btrack"><span class="bfill"></span></span><span class="bval">0.02</span></div>
+          <div class="bar" id="b3"><span class="blab">other</span><span class="btrack"><span class="bfill"></span></span><span class="bval">0.01</span></div>
+        </div>
+        <div class="arow" id="a2"><span class="aname">is_urgent</span><span class="atag"><span class="tag o">Noul</span></span><span class="aarr"><svg width="40" height="30" viewBox="0 0 24 18"><path d="M1 9h19M14 3l6 6-6 6" stroke="#948B7C" stroke-width="2.2" fill="none"/></svg></span><span class="aval" id="v2">0.97</span></div>
+        <div class="arow" id="a3"><span class="aname">frustration</span><span class="atag"><span class="tag o">Score</span></span><span class="aarr"><svg width="40" height="30" viewBox="0 0 24 18"><path d="M1 9h19M14 3l6 6-6 6" stroke="#948B7C" stroke-width="2.2" fill="none"/></svg></span><span class="aval" id="v3">1.6</span></div>
+      </div>
+      <div class="layer pad" id="Lcode">
+        <div class="lbl">route.py</div>
+<pre class="code"><span class="ln" id="cl1"><span class="kw">if</span> (a.intent.choice == <span class="st">"refund"</span></span><span class="ln" id="cl2">    <span class="kw">and</span> a.intent.confidence &gt; <span id="thr">0.50</span>):</span><span class="ln" id="cl3">    route_to_billing()</span></pre>
+        <div class="cfoot" id="cfoot"><div class="crow"><span class="lbl">threshold</span><span id="strack"><span id="sfill"></span><span id="sknob"></span></span><span id="sval">0.50</span></div>
+          <div class="crow"><span class="lbl">auto-route</span><span id="tg"><span id="tgk"></span></span><span id="tgState">off</span></div></div>
+      </div>
+      <div class="layer pad" id="Lstats">
+        <div class="srow" id="r1"><span class="slab">end-to-end latency</span><span class="sval" id="sv1">70–500<span class="u"> ms</span></span></div>
+        <div class="srow" id="r2"><span class="slab">per 1M input tokens</span><span class="sval" id="sv2">$0.042</span></div>
+        <div class="srow" id="r3"><span class="slab">output tokens</span><span id="free">free</span></div>
+      </div>
+      <div class="layer" id="Lend">Jev</div>
+    </div>
+    <div class="abs" id="tooltip">p 0.94
+confidence 0.91</div>
+    <div class="abs" id="engLabel"><b>jev-latest</b> · System One</div>
+    <div class="abs" id="engCount">0<span class="u"> ms</span></div>
+    <div class="abs" id="endBy">by <b>TypeSafe</b></div>
+    <div class="abs" id="endMicro">early access · typesafe.ai</div>
+    <div class="abs" id="ring"></div>
+    <svg class="abs" id="cursor" viewBox="0 0 40 52"><path d="M3 3 L3 40 L12.5 31 L19 46 L26 43 L19.5 28.5 L32 28.5 Z" fill="#1B1915" stroke="#F8F5EE" stroke-width="3" stroke-linejoin="round"/></svg>
+  </div>
+  <div id="kicker"></div>
+</div>
+<script>
+'use strict';
+// ---------- timing ----------
+const BP = 0.49985;
+const B = n => (n - 1) * BP;          // beat n -> seconds
+const S16 = BP / 4;
+const DUR = 11.996;
+
+// ---------- springs (closed-form step responses) ----------
+const SP = { snap:[28,.9], move:[18,.95], lazy:[11,1], shape:[20,.9], cam:[11.5,1], glide:[15,1], fast:[34,.92], drop:[26,.86] };
+function step(t, sp){
+  if (t <= 0) return 0;
+  const w = sp[0], z = sp[1];
+  if (z >= 1) return 1 - Math.exp(-w*t)*(1 + w*t);
+  const wd = w*Math.sqrt(1 - z*z);
+  return 1 - Math.exp(-z*w*t)*(Math.cos(wd*t) + (z*w/wd)*Math.sin(wd*t));
+}
+// keys: [[t, value, spring], ...] ; value may be a number or array; sum of one spring per change
+function trk(keys, t){
+  const first = keys[0][1];
+  if (Array.isArray(first)){
+    const v = first.slice();
+    for (let i = 1; i < keys.length; i++){
+      const [ti, vi, sp] = keys[i]; const s = step(t - ti, SP[sp || 'move'] || sp);
+      if (s === 0) continue;
+      const pv = keys[i-1][1];
+      for (let j = 0; j < v.length; j++) v[j] += (vi[j] - pv[j]) * s;
+    }
+    return v;
+  }
+  let v = first;
+  for (let i = 1; i < keys.length; i++){
+    const [ti, vi, sp] = keys[i]; const s = step(t - ti, SP[sp || 'move'] || sp);
+    if (s !== 0) v += (vi - keys[i-1][1]) * s;
+  }
+  return v;
+}
+const clamp = (x, a=0, b=1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a)*p;
+const easeOut = p => 1 - Math.pow(1 - clamp(p), 3);
+const easeInOut = p => { p = clamp(p); return p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3)/2; };
+const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+const rgb = (c, a=1) => `rgba(${c[0].toFixed(1)},${c[1].toFixed(1)},${c[2].toFixed(1)},${a})`;
+const C = { parch:hex('#F1ECE2'), paper:hex('#F8F5EE'), sunken:hex('#E7E0D2'), rule:hex('#D6CCBA'), ink:hex('#1B1915'),
+  ink2:hex('#5B554A'), ink3:hex('#948B7C'), gray:hex('#E4E4E7') };
+
+// enter / exit windows: exit blur 0->8 over 80ms, enter 8->0 over 120ms
+function vis(t, tin, tout = 1e9, rise = 14, sp = 'snap'){
+  let o = 0, bl = 8, dy = rise;
+  if (t >= tin){ const p = clamp((t - tin)/0.12); o = easeOut(p); bl = 8*(1 - p); dy = rise*(1 - step(t - tin, SP[sp])); }
+  if (t >= tout){ const q = clamp((t - tout)/0.08); o *= 1 - q; bl += 8*q; }
+  return { o, bl, dy };
+}
+function applyVis(el, v, extra = ''){
+  el.style.opacity = v.o.toFixed(4);
+  el.style.filter = v.bl > 0.05 ? `blur(${v.bl.toFixed(2)}px)` : 'none';
+  el.style.transform = `translateY(${v.dy.toFixed(2)}px) ${extra}`;
+  el.style.visibility = v.o <= 0.001 ? 'hidden' : 'visible';
+}
+
+// ---------- text scramble (deterministic) ----------
+const GL = '{}[]<>/_=:01#';
+function hsh(a, b){ let h = (a*374761393 + b*668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return (h ^ (h >>> 16)) >>> 0; }
+function scramble(txt, t0, t, per = 0.018, cap = 0.30){
+  const n = txt.length;
+  if (t < t0) return ' '.repeat(n);
+  const d = Math.min(per, cap / n); const q = Math.floor(t*30 + 1e-6);
+  let out = '';
+  for (let i = 0; i < n; i++){
+    const ch = txt[i];
+    const appear = t0 + i*d*0.35, resolve = t0 + i*d + 0.06;
+    if (ch === ' ') { out += ' '; continue; }
+    if (t < appear) { out += ' '; continue; }
+    out += t >= resolve ? ch : GL[hsh(i + 7, q) % GL.length];
+  }
+  return out;
+}
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ---------- DOM ----------
+const $ = id => document.getElementById(id);
+const E = {};
+['stage','cam','grid','shape','Lbub','Lstate','Lcube','Lans','Lcode','Lstats','Lend','bubText','timer','codeline','errchip','jp',
+ 'sLbl','ticket','sRule','qLbl','q1','q2','q3','sfoot','run','a1','a2','a3','v1','v2','v3','bars','aMeta','cl1','cl2','cl3','thr',
+ 'cfoot','strack','sfill','sknob','sval','tg','tgk','tgState','toast','tooltip','r1','r2','r3','sv1','sv2','free','endBy','endMicro','engLabel','engCount',
+ 'faceA','faceB','railIn','railOut','ring','cursor','kicker','ci0','ci1','ci2','co0','co1','co2'].forEach(id => E[id] = $(id));
+
+function rel(el, root){ let x = 0, y = 0, e = el; while (e && e !== root){ x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; }
+
+// ---------- layout constants (world coords) ----------
+const P = {};  // positions, measured in init()
+let SH, COL, CAMK, CUR, PRESS, FOLD, KICK;
+
+function init(){
+  // natural sizes
+  E.Lend.style.width = 'auto';
+  E.bubText.innerHTML = bubbleHTML(1.0);
+  const bubH = E.Lbub.offsetHeight;
+  const bottom = (el, root) => { const r = rel(el, root); return r.y + r.h; };
+  const padB = 56;
+  const stH0 = bottom(E.qLbl, E.Lstate) + padB, stH1 = bottom(E.q1, E.Lstate) + padB, stH2 = bottom(E.q2, E.Lstate) + padB,
+        stH3 = bottom(E.sfoot, E.Lstate) + padB;
+  const ansFull = E.Lans.offsetHeight, barsH = E.bars.offsetHeight, ansH0 = ansFull - barsH;
+  const codeH0 = bottom(E.cl3, E.Lcode) + padB + 10, codeFull = E.Lcode.offsetHeight;
+  const statsH = E.Lstats.offsetHeight;
+  const endW = E.Lend.offsetWidth, endH = E.Lend.offsetHeight;
+  Object.assign(P, { bubH, stH0, stH1, stH2, stH3, ansFull, barsH, ansH0, codeH0, codeFull, statsH, endW, endH });
+
+  // world placements (each state sits a little further down-right, so the camera travels)
+  const W = 1040;
+  P.bub = { x: 250, y: 300, w: 940, h: bubH };
+  P.cl  = { x: 250, y: 300 + bubH + 30, w: 940, h: 104 };
+  const jp = rel(E.jp, E.codeline);
+  P.err = { x: P.cl.x + jp.x - 170, y: P.cl.y + P.cl.h + 26 };
+  P.st  = { x: 330, y: 360, w: W };
+  P.cubeC = { x: 860, y: 740 };          // visual center of the cube
+  P.cubeS = 380; P.cubeA = 0.85*380;
+  P.ans = { x: 390, y: 450, w: W };
+  P.code = { x: 450, y: 540, w: W };
+  P.stats = { x: 500, y: 600, w: W };
+  P.endC = { x: 1020, y: 980 };
+  P.end = { x: P.endC.x - endW/2, y: P.endC.y - endH/2 - 70, w: endW, h: endH };
+  P.toast = { x: P.code.x + W - E.toast.offsetWidth - 40, y: P.code.y + codeFull + 26, w: E.toast.offsetWidth, h: E.toast.offsetHeight };
+  P.trackW = E.bars.querySelector('.btrack').offsetWidth;
+
+  const cubeTop = { x: P.cubeC.x - P.cubeS/2, y: P.cubeC.y - P.cubeA/2 - P.cubeS/2 };
+  // geometry keys: [x, y, w, h, r]
+  const G = (p, w, h, r) => [p.x, p.y, w, h, r];
+  SH = [
+    [0,      G(P.bub, 940, bubH, 34)],
+    [B(5),   G(P.st, W, stH0, 18), 'shape'],
+    [B(6),   G(P.st, W, stH1, 18), 'shape'],
+    [B(7),   G(P.st, W, stH2, 18), 'shape'],
+    [B(8),   G(P.st, W, stH3, 18), 'shape'],
+    [B(9),   G(cubeTop, P.cubeS, P.cubeS, 6), 'fast'],
+    [4.36,   G(P.ans, W, ansH0, 18), 'fast'],
+    [B(11),  G(P.ans, W, ansFull, 18), 'shape'],
+    [B(13),  G(P.code, W, codeH0, 18), 'shape'],
+    [6.22,   G(P.code, W, codeFull, 18), 'shape'],
+    [B(17),  G(P.stats, W, statsH, 18), 'shape'],
+    [B(21),  G(P.end, endW, endH, 28), 'shape'],
+  ];
+  // fill + ring colour ride a faster spring than geometry, so the swap never sits in a muddy middle tone
+  const ringNone = [...C.rule, 0], ringPaper = [...C.rule, 1], ringInk = [...C.ink, 1];
+  const K = (fill, ring) => [...fill, ...ring];
+  COL = [
+    [0,      K(C.gray, ringNone)],
+    [B(5),   K(C.paper, ringPaper), 'fast'],
+    [B(9),   K(C.paper, ringInk), 'fast'],
+    [4.36,   K(C.paper, ringPaper), 'fast'],
+    [B(13) + 0.05, K(C.ink, ringInk), [60, 1]],
+    [B(17) + 0.05, K(C.paper, ringPaper), [60, 1]],
+    [B(21) + 0.05, K(C.ink, ringInk), [60, 1]],
+  ];
+  FOLD = [[0, 0], [B(9), 1, 'fast'], [4.36, 0, 'fast']];
+
+  // camera framing: fit a world box into the free part of the square (below the kicker band when a kicker is up)
+  const box = (x0, y0, x1, y1) => ({ x0, y0, x1, y1 });
+  const fit = (bb, kick, zoom = 1, maxS = 1.2, dx = 0, dy = 0) => {
+    const top = kick ? 250 : 110, bot = 1340, left = 90, right = 1350;
+    const s = Math.min((right - left)/(bb.x1 - bb.x0), (bot - top)/(bb.y1 - bb.y0), maxS) * zoom;
+    const cx = (bb.x0 + bb.x1)/2 + dx, cy = (bb.y0 + bb.y1)/2 + dy;
+    return [cx - ((left + right)/2 - 720)/s, cy - ((top + bot)/2 - 720)/s, s];
+  };
+  const hookBB = box(P.bub.x, P.bub.y, P.bub.x + 940, P.err.y + 70);
+  const stBB = h => box(P.st.x, P.st.y, P.st.x + W, P.st.y + h);
+  const cubeBB = box(P.cubeC.x - 560, P.cubeC.y - 420, P.cubeC.x + 560, P.cubeC.y + 420);
+  const ansBB = h => box(P.ans.x, P.ans.y, P.ans.x + W, P.ans.y + h);
+  const codeBB = h => box(P.code.x, P.code.y, P.code.x + W, P.code.y + h);
+  const statsBB = box(P.stats.x, P.stats.y, P.stats.x + W, P.stats.y + statsH);
+  const endBB = box(P.endC.x - 460, P.end.y, P.endC.x + 460, P.end.y + endH + 180);
+  CAMK = [
+    [0,     fit(box(P.bub.x, P.bub.y, P.bub.x + 940, P.cl.y + P.cl.h), false, 1.0, 1.28)],
+    [0.45,  fit(hookBB, false, 1.0, 1.28), 'cam'],
+    [B(4) - 0.04, fit(hookBB, true, 1.0, 1.22), 'cam'],
+    [B(5),  fit(stBB(stH0 + 60), true), 'cam'],
+    [B(6),  fit(stBB(stH1), true), 'cam'],
+    [B(7) - 0.04, fit(stBB(stH2), false), 'cam'],
+    [B(8),  fit(stBB(stH3), false, 1.045, 1.2, 40, 30), 'cam'],
+    [B(9),  fit(cubeBB, false, 1, 1.25), 'fast'],
+    [4.36,  fit(ansBB(ansH0), false), 'cam'],
+    [B(11) - 0.06, fit(ansBB(ansFull), true), 'cam'],
+    [B(13), fit(codeBB(codeH0), true), 'cam'],
+    [6.22,  fit(codeBB(codeFull), true, 1.0, 1.2, 0, 20), 'cam'],
+    [B(16) - 0.06, fit(codeBB(codeFull + 26 + P.toast.h), true), 'cam'],
+    [B(17), fit(statsBB, false), 'cam'],
+    [B(19), fit(statsBB, false, 1.03, 1.2, 0, 30), 'cam'],
+    [B(21), fit(endBB, false, 1, 1.3), 'cam'],
+    [B(22), fit(endBB, false, 0.98, 1.3), 'lazy'],
+  ];
+  KICK = [[1.0, 0.03], [B(5), 0.02], [B(9), 0.08], [B(13), 0.02], [B(15), 0.018], [B(17), 0.022], [B(21), 0.04]];
+
+  // ------- cursor targets (world) -------
+  const at = (layerPos, el, root, fx = .5, fy = .5) => { const r = rel(el, root); return [layerPos.x + r.x + r.w*fx, layerPos.y + r.y + r.h*fy]; };
+  const jpC = at(P.cl, E.jp, E.codeline, .55, .72);
+  const runC = at(P.st, E.run, E.Lstate, .45, .6);
+  const tr0 = rel(E.bars.querySelector('.btrack'), E.Lans);
+  const barEnd = [P.ans.x + tr0.x + tr0.w*0.94 - 4, P.ans.y + tr0.y + 12];
+  P.barEnd = barEnd;
+  const st = rel(E.strack, E.Lcode); P.strack = st;
+  const knob = v => [P.code.x + st.x + st.w*v + 4, P.code.y + st.y + 8];
+  P.knob = knob;
+  const tgC = at(P.code, E.tg, E.Lcode, .62, .62);
+  const freeC = at(P.stats, E.free, E.Lstats, .6, .66);
+  CUR = [
+    [0,     [P.bub.x + 860, P.bub.y + 330]],
+    [0.02,  [P.bub.x + 800, P.bub.y + 370], 'lazy'],
+    [0.42,  jpC, 'glide'],
+    [1.12,  [jpC[0] + 40, jpC[1] + 30], 'lazy'],
+    [1.42,  [P.bub.x + 700, P.bub.y + 250], 'glide'],
+    [2.10,  [P.st.x + 960, P.st.y + 190], 'lazy'],
+    [B(8) - 0.02, runC, 'glide'],
+    [4.12,  [P.cubeC.x + 430, P.cubeC.y - 180], 'lazy'],
+    [4.70,  barEnd, 'glide'],
+    [5.75,  [barEnd[0] + 60, barEnd[1] + 150], 'lazy'],
+    [6.06,  knob(0.5), 'glide'],
+    // drag handled in cursorAt()
+    [6.68,  tgC, [26, 1]],
+    [7.2,   [tgC[0] - 40, tgC[1] + 150], 'lazy'],
+    [8.55,  freeC, 'glide'],
+    [9.25,  [freeC[0] + 380, freeC[1] + 380], 'lazy'],
+    [9.6,   [freeC[0] + 900, freeC[1] + 700], 'glide'],
+  ];
+  PRESS = [[1.97, 2.05], [B(9) - 0.03, B(9) + 0.06], [6.40, 6.66], [6.89, B(15)], [B(19) - 0.03, B(19) + 0.05]];
+  P.drag = { t0: 6.40, t1: 6.66, v0: 0.5, v1: 0.9 };
+}
+
+function cursorAt(t){
+  let p = trk(CUR, t);
+  const d = P.drag;
+  if (t >= d.t0 - 0.02){
+    // during drag the cursor x travels to the 0.90 position; y stays on the track
+    const k0 = P.knob(d.v0), k1 = P.knob(d.v1);
+    const s = step(t - d.t0, [17, 1]);
+    const dragOff = (k1[0] - k0[0]) * s;
+    // after the drag, the regular keys take over (they are relative to the absolute track), so fade the offset out
+    // by treating the drag as a spring that is later retargeted back to 0 at the next key (tgC includes absolute pos)
+    const back = step(t - 6.68, [26, 1]);
+    p = [p[0] + dragOff*(1 - back), p[1]];
+  }
+  return p;
+}
+function sliderVal(t){
+  const d = P.drag;
+  if (t < d.t0) return d.v0;
+  const k0 = P.knob(d.v0);
+  if (t <= d.t1){
+    const cx = cursorAt(t)[0];
+    return clamp((cx - 4 - P.code.x - P.strack.x) / P.strack.w, 0, 1);  // direct manipulation
+  }
+  // release: spring from wherever it was to the snapped value
+  const cx = cursorAt(d.t1)[0];
+  const vr = clamp((cx - 4 - P.code.x - P.strack.x) / P.strack.w, 0, 1);
+  return vr + (d.v1 - vr) * step(t - d.t1, SP.snap);
+}
+
+// ---------- bubble stream ----------
+const L1 = "Sure! Here's the JSON you asked for:", L2 = "```json", L3 = '{"intent": "refund", "is_';
+function bubbleHTML(t){
+  const n = 21 + 6*Math.min(8, Math.floor(t / S16 + 1e-6) + 1);
+  const tot = L1.length + L2.length + L3.length;
+  const k1 = Math.min(n, L1.length), k2 = clamp(n - L1.length, 0, L2.length), k3 = clamp(n - L1.length - L2.length, 0, L3.length);
+  const streaming = t < 1.0;
+  const car = streaming ? '<span class="car"></span>' : '';
+  let l1 = L1.slice(0, k1);
+  const sOn = t >= 1.0;
+  l1 = l1.length ? `<span id="bigS">${esc(l1[0])}</span>${esc(l1.slice(1))}` : '';
+  let h = `<span class="l1">${l1}${k2 === 0 && k3 === 0 ? car : ''}</span>`;
+  h += `<span class="l2">${esc(L2.slice(0, k2))}${k2 > 0 && k3 === 0 ? car : ''}</span>`;
+  h += `<span class="l3">${esc(L3.slice(0, k3))}${k3 > 0 ? car : ''}</span>`;
+  return h;
+}
+
+// ---------- seek ----------
+function px(n){ return n.toFixed(2) + 'px'; }
+function place(el, x, y){ el.style.left = px(x); el.style.top = px(y); }
+
+window.seek = function(t){
+  t = clamp(t, 0, DUR);
+  // ===== camera =====
+  let [fx, fy, s] = trk(CAMK, t);
+  let kick = 0;
+  for (const [tk, a] of KICK) kick += a * (step(t - tk, [40, 1]) - step(t - tk - 0.06, [16, 1]));
+  s *= 1 + kick;
+  // glitch shake at the parse error
+  let shx = 0;
+  if (t >= 1.0 && t < 1.13){ const q = Math.floor((t - 1.0)*60); shx = [7, -9, 6, -4, 3, -2, 1, 0][q] || 0; }
+  E.cam.style.transform = `translate(720px,720px) scale(${s.toFixed(5)}) translate(${px(-fx)},${px(-fy)})`;
+
+  // ===== the shape =====
+  const [x, y, w, h, r] = trk(SH, t);
+  const cv_ = trk(COL, t); const fill = cv_.slice(0, 3).map(v => clamp(v, 0, 255)); const ring = cv_.slice(3, 7);
+  const f = clamp(trk(FOLD, t), -0.05, 1.05);
+  const sh = E.shape.style;
+  sh.left = px(x); sh.top = px(y); sh.width = px(w); sh.height = px(h);
+  sh.borderRadius = px(Math.max(2, r));
+  sh.background = rgb(fill);
+  const ringW = lerp(1.5, 3, clamp(f));
+  const shA = clamp(1 - f*1.6);
+  sh.boxShadow = `inset 0 0 0 ${ringW.toFixed(2)}px ${rgb(ring.slice(0,3), clamp(ring[3]))}, 0 1px 0 rgba(27,25,21,${(.06*shA).toFixed(3)}), 0 22px 44px -18px rgba(27,25,21,${(.24*shA).toFixed(3)})`;
+  // press squash on clicks that hit the shape
+  let ps = 1;
+  ps -= 0.015 * (step(t - 1.97, SP.fast) - step(t - 2.05, SP.fast));
+  // iso fold: rect -> top face of the cube
+  const ia = 0.85*0.8660254, ib = 0.85*0.5;
+  const m = [lerp(1, ia, f)*ps, lerp(0, ib, f)*ps, lerp(0, -ia, f)*ps, lerp(1, ib, f)*ps];
+  sh.transform = `matrix(${m.map(v => v.toFixed(5)).join(',')},0,0)` + (shx ? ` translateX(${shx*0.4}px)` : '');
+  // side faces
+  const cx = x + w/2, cy = y + h/2;
+  const T = (u, v) => [cx + m[0]*u + m[2]*v, cy + m[1]*u + m[3]*v];
+  const TR = T(w/2, -h/2), BR = T(w/2, h/2), BL = T(-w/2, h/2);
+  const Hh = f * 0.85 * Math.min(w, h);
+  const pts = a => a.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' ');
+  const fOn = f > 0.004;
+  E.faceA.setAttribute('points', fOn ? pts([BL, BR, [BR[0], BR[1] + Hh], [BL[0], BL[1] + Hh]]) : '');
+  E.faceB.setAttribute('points', fOn ? pts([BR, TR, [TR[0], TR[1] + Hh], [BR[0], BR[1] + Hh]]) : '');
+  const faceStroke = 'stroke:#1B1915;stroke-width:3;stroke-linejoin:round;';
+  E.faceA.setAttribute('style', faceStroke + 'fill:#E7E0D2');
+  E.faceB.setAttribute('style', faceStroke + 'fill:#D6CCBA');
+
+  // rails + chips (engine)
+  const rOn = clamp((f - 0.55)/0.35);
+  const ux = 0.8660254, uy = 0.5;               // iso axis u (down-right), v = (-ux, uy) (down-left)
+  const gA = [(BL[0] + BR[0])/2, (BL[1] + BR[1])/2 + Hh];   // ground mid of face A
+  const gB = [(BR[0] + TR[0])/2, (BR[1] + TR[1])/2 + Hh];   // ground mid of face B
+  const RL = 430*rOn, RW = 80;
+  const rail = (g, dir, perp) => pts([
+    [g[0] + perp[0]*RW/2, g[1] + perp[1]*RW/2], [g[0] + perp[0]*RW/2 + dir[0]*RL, g[1] + perp[1]*RW/2 + dir[1]*RL],
+    [g[0] - perp[0]*RW/2 + dir[0]*RL, g[1] - perp[1]*RW/2 + dir[1]*RL], [g[0] - perp[0]*RW/2, g[1] - perp[1]*RW/2]]);
+  const railStyle = `fill:#E7E0D2;stroke:#1B1915;stroke-width:2.5;opacity:${rOn.toFixed(3)}`;
+  E.railIn.setAttribute('points', rOn > 0.001 ? rail(gA, [-ux, uy], [ux, uy]) : '');
+  E.railOut.setAttribute('points', rOn > 0.001 ? rail(gB, [ux, uy], [-ux, uy]) : '');
+  E.railIn.setAttribute('style', railStyle); E.railOut.setAttribute('style', railStyle);
+  for (let i = 0; i < 3; i++){
+    const ci = E['ci' + i], co = E['co' + i];
+    // inputs ride the rail into face A
+    const ti = 4.04 + i*0.07, pi = clamp((t - ti)/0.24);
+    const di = 400*(1 - easeInOut(pi));
+    const pinx = gA[0] - ux*di, piny = gA[1] + uy*di;
+    const oi = rOn * clamp(pi*6) * clamp((di - 30)/60);
+    ci.style.opacity = oi.toFixed(3); ci.style.visibility = oi > 0.001 ? 'visible' : 'hidden';
+    ci.style.transform = `translate(${px(pinx - ci.offsetWidth/2)},${px(piny - ci.offsetHeight - 6)})`;
+    // outputs leave face B
+    const to = 4.16 + i*0.07, po = clamp((t - to)/0.26);
+    const dO = 40 + 360*easeInOut(po);
+    const poX = gB[0] + ux*dO, poY = gB[1] + uy*dO;
+    const oo = rOn * clamp(po*5) * clamp(1 - (po - 0.85)/0.15);
+    co.style.opacity = oo.toFixed(3); co.style.visibility = oo > 0.001 ? 'visible' : 'hidden';
+    co.style.transform = `translate(${px(poX - co.offsetWidth/2)},${px(poY - co.offsetHeight - 6)})`;
+  }
+  // engine label + counter
+  const eo = clamp((f - 0.6)/0.3);
+  E.engLabel.style.opacity = eo.toFixed(3);
+  E.engLabel.style.visibility = eo > 0.001 ? 'visible' : 'hidden';
+  place(E.engLabel, cx - E.engLabel.offsetWidth/2, cy - 0.85*P.cubeS*0.5 - 96 - 20*(1 - eo));
+  const cnt = Math.round(256 * easeOut((t - 4.04)/0.26));
+  E.engCount.innerHTML = `${Math.max(0, cnt)}<span class="u"> ms</span>`;
+  E.engCount.style.opacity = eo.toFixed(3);
+  E.engCount.style.visibility = eo > 0.001 ? 'visible' : 'hidden';
+  place(E.engCount, cx - E.engCount.offsetWidth/2 + 8, BR[1] + Hh + 56 + 20*(1 - eo));
+
+  // ===== layers inside the shape =====
+  // bubble (0 - 2.0)
+  const vb = vis(t, -1, 2.0);
+  applyVis(E.Lbub, { o: vb.o * (t > 1.5 ? lerp(1, 0.5, easeOut((t - 1.5)/0.2)) : 1), bl: vb.bl, dy: 0 });
+  E.bubText.innerHTML = bubbleHTML(t);
+  const bigS = document.getElementById('bigS');
+  if (bigS){
+    const so = step(t - 1.0, SP.snap);
+    bigS.style.boxShadow = so > 0 ? `0 0 0 ${(4*so).toFixed(2)}px #1B1915` : 'none';
+    bigS.style.background = so > 0 ? rgb(C.paper, so) : 'transparent';
+    bigS.style.color = '#1B1915';
+  }
+  E.timer.textContent = `thinking ${(2.9 + Math.min(t, 1.0)*1.3).toFixed(1)}s`;
+
+  // state card (2.0 - 4.0)
+  const tS = 2.10, tSx = B(9);
+  applyVis(E.sLbl, vis(t, tS, tSx));
+  applyVis(E.ticket, vis(t, tS + 0.03, tSx));
+  applyVis(E.sRule, vis(t, tS + 0.06, tSx));
+  applyVis(E.qLbl, vis(t, tS + 0.06, tSx));
+  [[E.q1, B(6)], [E.q2, B(7)], [E.q3, B(8)], [E.sfoot, B(8) + 0.06]].forEach(([el, ti]) => {
+    const v = vis(t, ti - 0.02, tSx, -22, 'drop'); applyVis(el, v);
+  });
+  // Run hover + press
+  const hov = step(t - 3.72, SP.snap), prs = step(t - (B(9) - 0.03), SP.fast) - step(t - (B(9) + 0.06), SP.fast);
+  E.run.style.transform = `scale(${(1 + 0.05*hov - 0.09*prs).toFixed(4)})`;
+  E.run.style.background = rgb([27 + 22*hov, 25 + 20*hov, 21 + 16*hov]);
+
+  // cube top label
+  const cv = clamp((f - 0.5)/0.35) * (t < 4.36 ? 1 : clamp(1 - (t - 4.36)/0.06));
+  E.Lcube.style.opacity = cv.toFixed(3); E.Lcube.style.visibility = cv > 0.001 ? 'visible' : 'hidden';
+  E.Lcube.style.left = px((w - 360)/2); E.Lcube.style.top = px((h - 360)/2);
+
+  // answers (4.5 - 6.0)
+  const tAx = B(13);
+  applyVis(E.Lans.querySelector('.ahead'), vis(t, 4.46, tAx));
+  const barP = step(t - (B(11) - 0.02), SP.shape);
+  const rowT = [B(10), B(10) + S16, B(10) + 2*S16];
+  [E.a1, E.a2, E.a3].forEach((el, i) => {
+    const v = vis(t, rowT[i] - 0.02, tAx, 0, 'drop');
+    const dx = -26*(1 - step(t - rowT[i], SP.drop));
+    const shift = i > 0 ? -P.barsH*(1 - barP) : 0;
+    applyVis(el, { o: v.o, bl: v.bl, dy: shift }, `translateX(${px(dx)})`);
+    const vEl = [E.v1, E.v2, E.v3][i];
+    vEl.textContent = scramble(['"refund"', '0.97', '1.6'][i], rowT[i], t, 0.02, 0.14);
+  });
+  // bars
+  const bo = vis(t, B(11) - 0.02, tAx, 0);
+  E.bars.style.opacity = (bo.o * clamp(barP*1.4)).toFixed(3);
+  E.bars.style.filter = bo.bl > 0.05 ? `blur(${bo.bl.toFixed(2)}px)` : 'none';
+  E.bars.style.visibility = bo.o > 0.001 ? 'visible' : 'hidden';
+  E.bars.style.clipPath = `inset(0 0 ${((1 - clamp(barP)) * 100).toFixed(2)}% 0)`;
+  const PV = [0.94, 0.03, 0.02, 0.01];
+  const fade = step(t - B(12), SP.move);
+  E.bars.querySelectorAll('.bar').forEach((b, i) => {
+    const d = step(t - (B(11) + 0.04 + i*0.05), [16, 1]);
+    const fl = b.querySelector('.bfill');
+    fl.style.width = px(Math.max(0, P.trackW*PV[i]*d));
+    const col = i === 0 ? C.ink : [lerp(C.ink[0], C.ink3[0], fade), lerp(C.ink[1], C.ink3[1], fade), lerp(C.ink[2], C.ink3[2], fade)];
+    fl.style.background = rgb(i === 0 ? C.ink : [lerp(C.ink[0], 190, fade), lerp(C.ink[1], 180, fade), lerp(C.ink[2], 164, fade)]);
+    b.querySelector('.blab').style.color = rgb(col); b.querySelector('.bval').style.color = rgb(col);
+    b.querySelector('.blab').style.fontWeight = i === 0 ? '700' : '400';
+    b.querySelector('.bval').style.fontWeight = i === 0 ? '700' : '400';
+  });
+  // tooltip over the refund bar
+  const tt = vis(t, B(11) + 0.1, B(13) - 0.1, 10);
+  applyVis(E.tooltip, tt);
+  place(E.tooltip, P.barEnd[0] - 44, P.barEnd[1] - E.tooltip.offsetHeight - 26);
+
+  // code card (6.0 - 8.0)
+  const tC = B(13) + 0.08, tCx = B(17);
+  applyVis(E.Lcode.querySelector('.lbl'), vis(t, tC, tCx));
+  [E.cl1, E.cl2, E.cl3].forEach((el, i) => { el.style.display = 'block'; applyVis(el, vis(t, tC + i*S16*0.5, tCx, 16)); });
+  applyVis(E.cfoot, vis(t, 6.22, tCx, 18));
+  const sv_ = sliderVal(t);
+  const sw = P.strack.w;
+  const knobX = sw*sv_;
+  // dual-edge fill: leading edge follows the knob directly, trailing edge lags on a softer spring
+  E.sknob.style.left = px(knobX - 18);
+  const lag = (t > P.drag.t0) ? (sw*(sv_ - lerp(0.5, sv_, step(t - P.drag.t0, SP.move)))) : 0;
+  E.sfill.style.left = '0px'; E.sfill.style.width = px(Math.max(0, knobX - Math.max(0, lag)*0.0));
+  E.sval.textContent = sv_.toFixed(2);
+  E.thr.textContent = sv_.toFixed(2);
+  const thrHi = clamp((t - P.drag.t0)/0.05) * (1 - clamp((t - P.drag.t1 - 0.25)/0.2));
+  E.thr.style.background = `rgba(241,236,226,${(0.14 + 0.22*thrHi).toFixed(3)})`;
+  E.thr.style.color = thrHi > 0.5 ? '#FFFFFF' : '';
+  // toggle: two springs, leading edge snaps, trailing edge follows
+  const tgOn = B(15);
+  const lead = 7 + 46*step(t - tgOn, SP.snap);     // right edge moves right: leading
+  const trail = 7 + 46*step(t - tgOn, SP.move);
+  const left = trail, right = lead + 40;
+  E.tgk.style.left = px(left); E.tgk.style.width = px(right - left);
+  const on = step(t - tgOn, SP.snap);
+  E.tg.style.background = `rgba(241,236,226,${(0.2 + 0.8*clamp(on)).toFixed(3)})`;
+  E.tgk.style.background = rgb([lerp(241, 27, clamp(on)), lerp(236, 25, clamp(on)), lerp(226, 21, clamp(on))]);
+  E.tgk.style.transform = `scale(${(1 - 0.1*(step(t - 6.89, SP.fast) - step(t - tgOn, SP.fast))).toFixed(4)})`;
+
+  E.tgState.textContent = t >= tgOn ? 'on' : 'off';
+  E.tgState.style.color = t >= tgOn ? '#F1ECE2' : '#A39A8A';
+  // toast: slides out from under the card
+  const tO = B(16) - 0.02;
+  const tv = vis(t, tO, B(17), 0);
+  const tdy = -90*(1 - step(t - tO, SP.snap));
+  const tUp = -60*step(t - B(17), SP.fast);
+  applyVis(E.toast, { o: tv.o, bl: tv.bl, dy: tdy + tUp });
+  place(E.toast, P.toast.x, P.toast.y);
+
+  // stats (8.0 - 10.0)
+  const tSt = B(17) + 0.08, tStx = B(21);
+  const rows = [[E.r1, tSt], [E.r2, B(18)], [E.r3, B(19)]];
+  rows.forEach(([el, ti]) => applyVis(el, vis(t, ti - 0.02, tStx, 18)));
+  E.sv1.innerHTML = t < tSt + 0.35 ? esc(scramble('70–500', tSt, t, 0.03, 0.2)) + '<span class="u"> ms</span>' : '70–500<span class="u"> ms</span>';
+  E.sv2.textContent = scramble('$0.042', B(18), t, 0.03, 0.2);
+  const stp = step(t - B(19), SP.drop);
+  const tap = step(t - (B(19) - 0.03), SP.fast) - step(t - (B(19) + 0.05), SP.fast);
+  E.free.style.transform = `scale(${(1.45 - 0.45*stp - 0.04*tap).toFixed(4)}) rotate(${(-9 + 6*stp).toFixed(3)}deg)`;
+  E.free.style.opacity = clamp((t - B(19) + 0.02)/0.06).toFixed(3);
+
+  // end card (10.0 - 12.0)
+  const tE = B(21) + 0.06;
+  E.Lend.textContent = t < tE ? '   ' : scramble('Jev', tE, t, 0.07, 0.24);
+  const ve = vis(t, tE, 1e9, 0);
+  E.Lend.style.opacity = ve.o.toFixed(3); E.Lend.style.filter = ve.bl > 0.05 ? `blur(${ve.bl.toFixed(2)}px)` : 'none';
+  E.Lend.style.visibility = ve.o > 0.001 ? 'visible' : 'hidden';
+  E.Lend.style.left = px((w - P.endW)/2); E.Lend.style.top = px((h - P.endH)/2);
+  applyVis(E.endBy, vis(t, B(22), 1e9, 20));
+  applyVis(E.endMicro, vis(t, B(23), 1e9, 16));
+  place(E.endBy, P.endC.x - E.endBy.offsetWidth/2, P.end.y + P.endH + 56);
+  place(E.endMicro, P.endC.x - E.endMicro.offsetWidth/2, P.end.y + P.endH + 142);
+  const endMicroTxt = 'early access · typesafe.ai';
+  E.endMicro.textContent = scramble(endMicroTxt, B(23), t, 0.014, 0.28);
+
+  // ===== hook extras (code line + error chip) =====
+  const vc = vis(t, 0.40, 2.0, 22);
+  const clx = shx;
+  applyVis(E.codeline, vc, `translateX(${clx}px)`);
+  place(E.codeline, P.cl.x, P.cl.y);
+  const full = 'const a = JSON.parse(reply)';
+  const nch = clamp(Math.floor((t - 0.40)/0.016), 0, full.length);
+  E.codeline.innerHTML = nch >= full.length ? '<span class="k">const</span> a = JSON.<span id="jp">parse</span>(reply)'
+    : esc(full.slice(0, nch)).replace(/^const/, '<span class="k">const</span>');
+  const errOn = t >= 1.0;
+  E.codeline.style.boxShadow = errOn ? `inset 0 0 0 ${(3*step(t - 1.0, SP.snap)).toFixed(2)}px #1B1915` : 'none';
+  const ve2 = vis(t, 0.99, 2.0, -12, 'drop');
+  applyVis(E.errchip, ve2, `translateX(${shx}px) scale(${(0.92 + 0.08*step(t - 1.0, SP.drop)).toFixed(4)})`);
+  E.errchip.style.transformOrigin = '30px 0';
+  place(E.errchip, P.err.x, P.err.y);
+
+  // ===== cursor =====
+  const cp = cursorAt(t);
+  let press = 0;
+  for (const [a, b] of PRESS) press += step(t - a, SP.fast) - step(t - b, SP.snap);
+  const cs = (1 - 0.14*press) / s;
+  E.cursor.style.transform = `translate(${px(cp[0] - 3/s)},${px(cp[1] - 3/s)}) scale(${cs.toFixed(4)})`;
+  const cOn = t < 9.9 ? 1 : 0;
+  E.cursor.style.opacity = cOn; E.cursor.style.visibility = cOn ? 'visible' : 'hidden';
+  // click ring on the most recent press
+  let ringO = 0, ringS = 0, rx = 0, ry = 0;
+  for (const [a] of PRESS){ const d = t - a; if (d >= 0 && d < 0.34){ const p = d/0.34; ringO = 0.55*(1 - p); ringS = 0.3 + 0.7*easeOut(p); const q = cursorAt(a); rx = q[0]; ry = q[1]; } }
+  E.ring.style.opacity = ringO.toFixed(3); E.ring.style.visibility = ringO > 0.001 ? 'visible' : 'hidden';
+  E.ring.style.transform = `translate(${px(rx)},${px(ry)}) scale(${(ringS / s).toFixed(4)})`;
+
+  // ===== kicker (screen space) =====
+  const KK = [['Stop parsing paragraphs.', B(4), 2.95], ['Typed answers. Real probabilities.', B(11) - 0.05, 6.40], ['Your code branches. No parsing.', 6.55, 8.45]];
+  let ktxt = '', kv = { o: 0, bl: 0, dy: 0 };
+  for (const [txt, a, b] of KK){ if (t >= a - 0.001 && t < b + 0.1){ ktxt = scramble(txt, a, t, 0.018, 0.30); kv = vis(t, a, b, 16); } }
+  E.kicker.textContent = ktxt;
+  applyVis(E.kicker, kv);
+  return true;
+};
+
+window.__ready = (async () => {
+  await document.fonts.load('400 40px "Space Mono"'); await document.fonts.load('700 40px "Space Mono"');
+  await document.fonts.load('400 40px Geist'); await document.fonts.load('600 40px Geist');
+  await document.fonts.ready;
+  init();
+  const q = new URLSearchParams(location.search); window.seek(q.has('t') ? parseFloat(q.get('t')) : 0);
+  return true;
+})();
+</script>
+</body>
+</html>
