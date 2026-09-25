@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const url = 'file://' + path.join(here, 'index.html');
 const [mode, outDir, ...rest] = process.argv.slice(2);
-fs.mkdirSync(outDir, { recursive: true });
+if (mode !== 'poster') fs.mkdirSync(outDir, { recursive: true });
 const FPS = 60, SUB = 4, DUR = 11.996, POSTER_T = 11.9;
 const NF = Math.round(DUR * FPS);   // 720 output frames (the mux trims to 11.996 s)
 
@@ -31,7 +31,7 @@ if (mode === 'stills'){
   await Promise.all(pages.map(async pg => { while (i < jobs.length){ const j = jobs[i++]; await shot(pg, j.t, path.join(outDir, j.name + '.png'), 'png'); } }));
 } else if (mode === 'poster'){
   const pg = await openPage(browser);
-  await shot(pg, POSTER_T, rest[0], 'jpeg');
+  await shot(pg, POSTER_T, outDir, 'jpeg');
 } else if (mode === 'frames'){
   // subframe k of output frame n is at n/60 + k/240; output frame 0 is the poster (all 4 subframes at POSTER_T)
   const total = NF * SUB;
