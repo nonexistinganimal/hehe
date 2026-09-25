@@ -52,8 +52,8 @@ CUES += [
     (B(8) + S16*2,   "ui/rollover2.ogg", 0, 0.22),               # hover Run (3.75)
     (B(9),           "interface/click_003.ogg", 0, 0.42),        # Run on the drop
     (B(9),           "impact/impactSoft_medium_001.ogg", 0, 0.58),
-    (B(10),          rng.choice(keys), 0, 0.45),                 # answers fill in
-    (B(10) + S16,    rng.choice(keys), 0, 0.45),
+    (B(10) + S16,    rng.choice(keys), 0, 0.45),                 # answers fill in (rows land on 32nds after the unfold)
+    (B(10) + 1.5*S16, rng.choice(keys), 0, 0.45),
     (B(10) + 2*S16,  rng.choice(keys), 0, 0.45),
     (B(11),          "ui/rollover2.ogg", 0, 0.20),               # tooltip hover
     (B(13),          "interface/drop_002.ogg", -0.81, 0.35),     # code card

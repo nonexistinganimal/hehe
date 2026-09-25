@@ -78,6 +78,12 @@ body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
 #toast .ck .ic{width:30px;height:30px}
 #toast b{color:var(--ink);font-weight:700}
 #toast em{font-style:normal;color:var(--ink3)}
+#stRule{height:1px;background:rgba(241,236,226,.16)}
+#toastI{display:flex;align-items:center;gap:20px;font:400 30px/1 "Space Mono",monospace;color:rgba(241,236,226,.62)}
+#toastI .ck{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:26px;background:var(--parch);color:var(--ink)}
+#toastI .ck .ic{width:28px;height:28px}
+#toastI b{color:var(--parch);font-weight:700}
+#toastI em{font-style:normal;opacity:.6}
 #wm{font:700 230px/1 "Space Mono",monospace;letter-spacing:-0.04em;color:var(--ink)}
 #wmBy{font:500 44px/1 "Geist",sans-serif;color:var(--ink2);letter-spacing:-0.01em}
 #wmBy b{font-weight:600;color:var(--ink)}
@@ -151,7 +157,9 @@ body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
    <!-- B19: stat pill -->
    <div class="a" id="stat"><b id="statN">70–500</b><span>ms</span></div>
    <div class="a" id="statSub">end-to-end</div>
-   <!-- B20-B22: toast (travels into the wordmark card footer) -->
+   <div class="a" id="stRule"></div>
+   <div class="a" id="toastI"><i class="ck"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span><b>$0.042</b> / 1M input <em>·</em> <b>output free</b></span></div>
+   <!-- B21-B23: price line in the wordmark footer -->
    <div class="a" id="toast"><i class="ck"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span><b>$0.042</b> / 1M input <em>·</em> <b>output free</b></span></div>
    <!-- B21-B23: wordmark card -->
    <div class="a" id="wm">Jev</div>
@@ -185,6 +193,7 @@ function S(dt, w, z) {
   return 1 - e * (Math.cos(wd * dt) + (z * w / wd) * Math.sin(wd * dt));
 }
 // settle cut-off: once the envelope * amplitude is below tol the spring IS at rest (keeps loop frames identical)
+function ramp(dt, d) { if (dt <= 0) return 0; if (dt >= d) return 1; const x = dt / d; return x * x * (3 - 2 * x); }
 function Se(dt, w, z, amp, tol) {
   if (dt <= 0) return 0;
   const env = z >= 1 ? Math.exp(-w * dt) * (1 + w * dt) : Math.exp(-z * w * dt) * (1 + z / Math.sqrt(1 - z * z));
@@ -198,8 +207,9 @@ function trk(t, tr) {
   for (const e of tr.ev) {
     const d = e[1] - prev; prev = e[1]; if (!d) continue;
     const w = e[2] || W, z = e[3] || Z;
-    out += d * Se(t - e[0], w, z, d, tol);
-    if (tr.per) out += d * Se(t - e[0] + T, w, z, d, tol);
+    const f = w < 0 ? (x => ramp(x, -w)) : (x => Se(x, w, z, d, tol));
+    out += d * f(t - e[0]);
+    if (tr.per) out += d * f(t - e[0] + T);
   }
   return out;
 }
@@ -207,13 +217,15 @@ const P = (v0, ev, o = {}) => Object.assign({ v0, ev, per: true }, o);
 const NP = (v0, ev, o = {}) => Object.assign({ v0, ev, per: false }, o);
 
 // ---------------------------------------------------------------- shape (the one element)
-const SW = P(340, [[REL, 112, 26, .92], [b[4], 600, 20, .92], [b[5], 780], [COLL, 620], [b[10], 656], [b[19], 600], [b[20], 740], [b[21], 760], [b[24], 340, 26, 1]], { tol: 0.05 });
-const SH = P(112, [[b[5], 588], [K1, 512, 26, .95], [K2, 436, 26, .95], [COLL, 230], [b[10], 104], [b[12], 340], [b[17], 440], [b[19], 190], [b[20], 124], [b[21], 640], [b[24], 112, 26, 1]], { tol: 0.05 });
-const SR = P(56, [[b[5], 28], [COLL, 36], [b[10], 52], [b[19], 95], [b[20], 62], [b[21], 44], [b[24], 56, 26, 1]], { tol: 0.05 });
-const SINK = P(1, [[b[5], 0], [b[19], 1], [b[20], 0], [b[24], 1]], { w: 42, z: 1, tol: 1e-3 });
+const SW = P(340, [[REL, 112, 26, .92], [b[4], 600, 20, .92], [b[5], 780], [COLL, 620], [b[10], 656], [b[19], 740], [b[21], 760], [b[24], 340, 26, 1]], { tol: 0.05 });
+const SH = P(112, [[b[5], 588], [K1, 512, 26, .95], [K2, 436, 26, .95], [COLL, 230], [b[10], 104], [b[12], 340], [b[17], 440], [b[19], 190], [b[20], 300], [b[21], 640], [b[24], 112, 26, 1]], { tol: 0.05 });
+const SR = P(56, [[b[5], 28], [COLL, 36], [b[10], 52], [b[19], 95], [b[20], 48], [b[21], 44], [b[24], 56, 26, 1]], { tol: 0.05 });
+const FL = 0.06, FD = -0.05;   // flip starts after exit; 3-frame cut-through
+const SINK = P(1, [[b[5] + FL, 0, FD], [b[19] + FL, 1, FD], [b[21] + FL, 0, FD], [b[24] + 0.09, 1, FD]]);
+const SY = P(0, [[b[19], -55], [b[20], 0]], { tol: 0.05 });   // shape centre y: B20 grows down from a fixed top
 const SSC = P(1, [[b[2], .96, 32, .9], [REL, 1, 30, .9]], { tol: 1e-5 });
 // camera
-const CAM_S = P(2.3, [[b[4], 1.65], [b[5], 1.22], [COLL, 1.55], [b[10], 1.5], [b[13], 1.6, 10, 1], [b[16], 1.5, 12, 1], [b[19], 1.6], [b[20], 1.35], [b[21], 1.3], [b[24], 2.3, 26, 1]], { w: 15, z: 1, tol: 2e-4 });
+const CAM_S = P(2.3, [[b[4], 1.65], [b[5], 1.22], [COLL, 1.55], [b[10], 1.5], [b[13], 1.6, 10, 1], [b[16], 1.5, 12, 1], [b[19], 1.3], [b[24], 2.3, 26, 1]], { w: 15, z: 1, tol: 2e-4 });
 const CAM_X = P(0, [[b[13], 70, 10, 1], [b[16], 0, 12, 1]], { tol: 0.002 });
 // cursor (world coords); [t, x, y, omega, zeta]
 const CUR = [
@@ -229,20 +241,19 @@ const PRESS = P(0, [[b[2], 1], [REL, 0], [b[9], 1], [b[9] + .08, 0], [b[11], 1],
 const LOADLEN = NP(0, [[0.64, 48, 18, 1], [b[3], 163.4, 24, 1]]);
 const CHK = NP(1, [[b[3] + 0.04, 0, 22, 1]], { tol: 1e-4 });
 const ROWV = [NP(0, []), NP(1, [[K1, 0, 28, .9]]), NP(2, [[K1, 1, 28, .9]]), NP(3, [[K1, 2, 28, .9], [K2, 1, 28, .9]]), NP(4, [[K1, 3, 28, .9], [K2, 2, 28, .9]])];
-const SEL = NP(0, [[b[7], 1, 30, 1], [COLL, 0, 30, 1]], { tol: 1e-4 });
+const SEL = NP(0, [[b[7], 1, -0.05], [COLL + 0.045, 0, -0.035]]);
 const ENT = NP(0, [[b[8], 1, 45, 1], [b[8] + 0.09, 0, 40, 1]], { tol: 1e-4 });
 const M1 = NP(0, [[COLL, 1, 18, .95]], { tol: 1e-4 });       // palette row -> toggle card
-const TON = NP(0, [[b[9], 1, 30, 1]], { tol: 1e-4 });
+const TON = NP(0, [[b[9], 1, -0.05]]);
 // knob / tab indicator: left & right edges ride different springs (leading edge snappier)
 const KL = NP(130, [[b[9], 194, 17, .95], [b[10], 112, 20, .95], [b[11], -100, 30, .9], [b[16], -312, 30, .9]]);
 const KR = NP(190, [[b[9], 254, 32, .9], [b[10], 312, 20, .95], [b[11], 100, 16, .95], [b[16], -112, 16, .95]]);
 const KT = NP(85, [[b[10], 16, 20, .95]]);
 const KB = NP(145, [[b[10], 88, 20, .95]]);
 const KRAD = NP(30, [[b[10], 36, 20, .95]]);
-const KINK = NP(0, [[b[10], 1, 28, 1]], { tol: 1e-4 });
+const KINK = NP(0, [[b[10] + 0.07, 1, -0.05]]);
 const TPR = [NP(0, [[b[16], 1, 40, 1], [b[16] + .08, 0, 40, 1]], { tol: 1e-4 }), NP(0, [[b[11], 1, 40, 1], [b[11] + .08, 0, 40, 1]], { tol: 1e-4 }), NP(0, [])];
 const GRAB = NP(0, [[b[13], 1, 30, .9], [b[15], 0, 30, .9]], { tol: 1e-4 });
-const M2 = NP(0, [[b[21], 1, 18, .95]], { tol: 1e-4 });       // toast -> wordmark footer
 
 // ---------------------------------------------------------------- helpers
 const $ = id => document.getElementById(id);
@@ -295,7 +306,7 @@ function html(el, s) { if (el.__h !== s) { el.__h = s; el.innerHTML = s; } }
 const E = {}; let MW = {};
 function init() {
   document.querySelectorAll('[id]').forEach(el => E[el.id] = el);
-  for (const id of ['btn', 'isl', 'pfoot', 'sHead', 'cHead', 'stat', 'toast', 'wmChips', 'sVal']) E[id].__disp = 'flex';
+  for (const id of ['btn', 'isl', 'pfoot', 'sHead', 'cHead', 'stat', 'toast', 'toastI', 'wmChips', 'sVal']) E[id].__disp = 'flex';
   for (const id of ['pK', 'kEnter']) E[id].__disp = 'inline-flex';
   E.tabsO.__disp = 'block';
   // measure layout widths once (fonts are loaded)
@@ -328,7 +339,8 @@ function seek(tIn) {
   const W = trk(t, SW), H = trk(t, SH), R = trk(t, SR), ink = cl(trk(t, SINK)), sc = trk(t, SSC);
   const sh = E.shape;
   ss(sh, 'width', f2(W) + 'px'); ss(sh, 'height', f2(H) + 'px');
-  ss(sh, 'transform', `translate(${f2(-W / 2)}px,${f2(-H / 2)}px) scale(${f4(sc)})`);
+  const sy0 = trk(t, SY);
+  ss(sh, 'transform', `translate(${f2(-W / 2)}px,${f2(-H / 2 + sy0)}px) scale(${f4(sc)})`);
   ss(sh, 'borderRadius', f2(Math.min(R, W / 2, H / 2)) + 'px');
   ss(sh, 'backgroundColor', mix(C.paper, C.ink, ink));
   ss(sh, 'boxShadow', `inset 0 0 0 ${f2(1.3 / cs)}px ${mix(C.rule, C.ink, ink)}, 0 1px 0 rgba(27,25,21,.06), 0 12px 32px -12px rgba(27,25,21,.2)`);
@@ -336,7 +348,7 @@ function seek(tIn) {
   let w;
 
   // --- button
-  w = win(t, 11.60, REL + T);
+  w = win(t, b[24] + 0.14, REL + T);
   if (fx(E.btn, w)) place(E.btn, X(0), Y(0) + (1 - w.k) * 10, .5, .5, .97 + .03 * w.k);
 
   // --- loader -> check
@@ -356,13 +368,13 @@ function seek(tIn) {
   if (fx(E.isl2, w)) { place(E.isl2, X(268), Y(0) + (1 - w.k) * 8, 1, .5); txt(E.islN, scr('70', 1.62, t, .08, .03)); }
 
   // --- palette
-  const wp = win(t, 2.09, COLL);
+  const wp = win(t, b[5] + 0.11, COLL);
   if (fx(E.pS, wp)) place(E.pS, X(-350), 60 + (1 - wp.k) * 8);
-  w = win(t, 2.12, K1, .12, .001);
+  w = win(t, b[5] + 0.12, K1, .12, .001);
   if (fx(E.ph, w)) place(E.ph, X(-318), 60 + (1 - w.k) * 8, 0, .5);
   const nT = t >= K3 ? 3 : t >= K2 ? 2 : t >= K1 ? 1 : 0, q = 'urg'.slice(0, nT);
   if (fx(E.typed, wp) && nT) { txt(E.typed, q); place(E.typed, X(-318), 60 + (1 - wp.k) * 8, 0, .5); }
-  const lastKey = nT === 3 ? K3 : nT === 2 ? K2 : nT === 1 ? K1 : 2.12;
+  const lastKey = nT === 3 ? K3 : nT === 2 ? K2 : nT === 1 ? K1 : b[5] + 0.12;
   const blink = ((t - lastKey) % 1.0) < 0.55 ? 1 : 0;
   if (fx(E.caret, { ...wp, o: wp.o * blink })) place(E.caret, X(-318) + nT * MW.typed1 + 3, 60 + (1 - wp.k) * 8, 0, .5);
   if (fx(E.pK, wp)) place(E.pK, X(354), 60 + (1 - wp.k) * 8, 1, .5);
@@ -378,19 +390,20 @@ function seek(tIn) {
   const rowOut = [K1, COLL, K2, COLL, COLL];
   const matchHTML = (name) => q ? name.replace(q, `<b>${q}</b>`) : name;
   for (const i of [0, 2, 3, 4]) {
-    w = win(t, 2.13 + i * 0.03, rowOut[i]);
+    w = win(t, b[5] + 0.12 + i * 0.025, rowOut[i]);
     const r = E['r' + i], c = E['c' + i];
     const s = .97 + .03 * w.k - (w.q * .04);
     if (fx(r, w)) { html(r, matchHTML(r.textContent)); r.classList.toggle('q', !!q); place(r, X(-340), rowY(i) + (1 - w.k) * 10, 0, .5, s); }
     if (fx(c, w)) place(c, X(340), rowY(i) + (1 - w.k) * 10, 1, .5, s);
   }
   const sel = cl(trk(t, SEL));
-  w = win(t, K1, COLL, .06, .08);
-  if (fx(E.hl, w, false)) { ss(E.hl, 'backgroundColor', mix(C.sunk, C.ink, sel)); place(E.hl, X(0), rowY(1)); }
+  w = win(t, K1, COLL + 0.05, .06, .001);   // exits by collapsing while still ink (no grey fade)
+  const hlc = 1 - eo(cl((t - COLL) / 0.05));
+  if (fx(E.hl, w, false)) { ss(E.hl, 'backgroundColor', mix(C.sunk, C.ink, sel)); place(E.hl, X(0), rowY(1), .5, .5, 1, 1); ss(E.hl, 'transform', E.hl.style.transform.replace(/scale\([^)]*\)/, `scale(${f4(0.96 + 0.04 * hlc)},${f4(hlc)})`)); }
 
   // --- is_urgent label + chip travel: palette row -> toggle card header
   const m1 = trk(t, M1);
-  w = win(t, 2.16, b[10]);
+  w = win(t, b[5] + 0.145, b[10]);
   if (fx(E.uLabel, w)) {
     const big = t >= COLL + 0.04;
     html(E.uLabel, big ? '<b>is_urgent</b>' : matchHTML('is_urgent'));
@@ -450,7 +463,7 @@ function seek(tIn) {
     if (fx(E['bf' + i], { ...wc, o: wc.o * cl(fw / 3) })) { ss(E['bf' + i], 'width', f2(Math.max(14, fw)) + 'px'); ss(E['bf' + i], 'backgroundColor', i === 0 ? '#1B1915' : '#948B7C'); place(E['bf' + i], X(-40), y, 0, .5); }
     if (fx(E['bn' + i], wc)) { txt(E['bn' + i], t < t0 ? '    ' : scr(PS[i], t0, t, .06, .02)); ss(E['bn' + i], 'color', i === 0 ? '#1B1915' : '#5B554A'); ss(E['bn' + i], 'fontWeight', i === 0 ? '700' : '400'); place(E['bn' + i], X(270), y, 1, .5); }
   }
-  w = win(t, b[18], b[19], .1, .08);
+  w = win(t, b[18] - 0.08, b[19], .08, .08);   // lands ON the beat, settled a full beat
   if (fx(E.tip, w)) place(E.tip, X(128), 185 + (1 - w.k) * 6, .5, 1, .9 + .1 * w.k);
 
   // --- knob -> liquid tab indicator (drawn above base tab labels)
@@ -472,38 +485,58 @@ function seek(tIn) {
   } else ss(E.tabsO, 'display', 'none');
 
   // --- stat pill
-  w = win(t, 9.1, b[20]);
-  if (fx(E.stat, w)) { txt(E.statN, scr('70–500', 9.1, t, .06, .02)); place(E.stat, X(0), Y(-16) + (1 - w.k) * 10); }
-  w = win(t, 9.18, b[20]);
-  if (fx(E.statSub, w)) place(E.statSub, X(0), Y(52) + (1 - w.k) * 10);
+  const tS = b[19] + 0.11;
+  w = win(t, tS, b[21]);
+  if (fx(E.stat, w)) { txt(E.statN, scr('70–500', tS, t, .06, .02)); place(E.stat, X(0), 80 + (1 - w.k) * 10); }
+  w = win(t, tS + 0.04, b[21]);
+  if (fx(E.statSub, w)) place(E.statSub, X(0), 146 + (1 - w.k) * 10);
+  // B20: price row drops in under the stat (card grows down, stat never moves)
+  w = win(t, b[20] + 0.05, b[21]);
+  if (fx(E.stRule, w, false)) { ss(E.stRule, 'width', '660px'); place(E.stRule, X(0), 196); }
+  w = win(t, b[20] + 0.07, b[21]);
+  if (fx(E.toastI, w)) place(E.toastI, X(0), 250 - (1 - w.k) * 14);
 
   // --- toast -> wordmark footer
-  const m2 = trk(t, M2);
-  w = win(t, 9.6, b[23]);
-  if (fx(E.toast, w)) place(E.toast, X(0), Y(lerp(0, 250, m2)) + (1 - w.k) * 10);
+  w = win(t, b[21] + 0.15, 10.88);
+  if (fx(E.toast, w)) place(E.toast, X(0), Y(250) + (1 - w.k) * 10);
 
   // --- wordmark
-  w = win(t, b[21] + 0.02, b[24], .1);
-  if (fx(E.wm, w)) { txt(E.wm, scr('Jev', b[21] + 0.02, t, .16, .018)); place(E.wm, X(0), Y(-70) + (1 - w.k) * 14); }
+  w = win(t, b[21] + 0.11, b[24], .1);
+  if (fx(E.wm, w)) { txt(E.wm, scr('Jev', b[21] + 0.11, t, .14, .018)); place(E.wm, X(0), Y(-70) + (1 - w.k) * 14); }
   w = win(t, b[22], b[24], .16);
   if (fx(E.wmBy, w)) place(E.wmBy, X(0), Y(72) + (1 - w.k) * 18);
   w = win(t, b[22] + 0.03, b[24]);
   if (fx(E.wmMicro, w)) { txt(E.wmMicro, scr('System One model', b[22] + 0.03, t, .04, .012)); place(E.wmMicro, X(-332), Y(-262) + (1 - w.k) * 8, 0, .5); }
   w = win(t, b[22] + 0.07, b[24]);
   if (fx(E.wmChips, w)) place(E.wmChips, X(332), Y(-262) + (1 - w.k) * 8, 1, .5);
-  w = win(t, b[21] + 0.1, b[24]);
+  w = win(t, b[21] + 0.13, b[24]);
   if (fx(E.wmRule, w, false)) { ss(E.wmRule, 'width', '664px'); place(E.wmRule, X(0), Y(172)); }
-  w = win(t, b[23] + 0.02, b[24] + 0.03);
+  w = win(t, 10.94, b[24] + 0.03, .09, .08);   // settled 11.03 -> 11.537
   if (fx(E.url, w)) place(E.url, X(0), Y(250) + (1 - w.k) * 10);
 
   // --- cursor (screen space, fixed size; world position projected through the camera)
   const wx = trk(t, CUR_X), wy = trk(t, CUR_Y), pr = trk(t, PRESS);
   const sx = 720 + (wx - cx) * cs, sy = 720 + wy * cs;
   ss(E.cursor, 'transform', `translate(${f2(sx - 16.5)}px,${f2(sy - 9.6)}px) scale(${f4(1 - .12 * pr)})`);
+  window.__cam = { cs, cx };
   return t;
 }
 window.seek = seek;
 window.T = T; window.BEATS = b;
+function snapRects() {
+  const m = {};
+  for (const id in E) { const el = E[id]; if (!(el instanceof Element) || !el.getClientRects().length) continue; if (id === 'grid' || id === 'stage' || id === 'cam' || id === 'dots') continue; const r = el.getBoundingClientRect(); if (r.width || r.height) m[id] = [r.left, r.top, r.right, r.bottom]; }
+  return m;
+}
+window.motion = function (t, dt = 1 / 60) {
+  seek(t); const a = snapRects(), ca = { ...window.__cam };
+  seek(t + dt); const c = snapRects(), cb = { ...window.__cam };
+  let mx = 0, who = '';
+  for (const id in a) if (c[id]) { const d = Math.max(...a[id].map((v, i) => Math.abs(v - c[id][i]))); if (d > mx) { mx = d; who = id; } }
+  for (const sx of [0, 1440]) { const wx = (sx - (720 - ca.cx * ca.cs)) / ca.cs; const d = Math.abs(720 - cb.cx * cb.cs + wx * cb.cs - sx) ; if (d > mx) { mx = d; who = 'camera'; } }
+  if (E.load.getClientRects().length) { const d = 560 / 60 * Math.PI / 180 * 26 * ca.cs; if (d > mx) { mx = d; who = 'loader'; } }
+  return [mx, who];
+};
 window.ready = document.fonts.ready.then(() => { init(); seek(0); return true; });
 </script>
 </body>
